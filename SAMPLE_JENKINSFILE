@@ -43,3 +43,556 @@ stages{
         }
     }
 }
+
+pipeline {
+    agent any
+    stages {
+        stage('Example') {
+            input {
+                message "Should we continue?"
+                ok "Yes, we should."
+                submitter "alice,bob"
+                parameters {
+                    string(name: 'PERSON', defaultValue: 'Mr Jenkins', description: 'Who should I say hello to?')
+                }
+            }
+            steps {
+                echo "Hello, ${PERSON}, nice to meet you."
+            }
+        }
+    }
+}
+
+#/bin/bash
+cd /clients/CG_PT/
+svn update > /tmp/svnout.log
+SVNOUT= $(grep -e conflict -e failed /tmp/svnout.log)
+echo $(cat /tmp/svnout.log)
+if ["$SVNOUT" != "failed"]
+then
+        if ["$SVNOUT" != "conflict"]
+        then
+                if ["$SVNOUT" != "lock"]
+                then
+                        sh stopofbiz.sh
+                        sh ant clean
+                        sh ant build
+                else
+                        echo "LOCKED for another user"
+        else
+                echo "CONFLICT OCCURED"
+else
+        echo "ERROR OCCURED"
+fi
+sh startofbiz.sh
+
+node {
+    def remote = [:]
+    remote.name = 'fiotestpt'
+    remote.host = '192.168.70.19'
+    remote.user = 'ofbiz'
+    remote.password = 'fio@123'
+    remote.allowAnyHosts = 'true'
+    stage('test plugin') {
+        sshCommand remote: remote, command: "ls -ltrh /clients/CBG/trunk-v1"                
+    }
+    stage('SVN UPDATE') {
+        sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1"
+        sshCommand remote: remote, command: "svn update"
+    }
+    stage('STOP OFBIZ') {
+        sshCommand remote: remote, command: "sh /clients/CBG/trunk-v1/stopofbiz.sh"                
+    }
+    stage('CLEAN AND BUILD') {
+        sshCommand remote: remote, command: "sh /clients/CBG/trunk-v1/ant clean"
+        sshCommand remote: remote, command: "sh /clients/CBG/trunk-v1/ant build"
+    }
+    stage('START OFBIZ') {
+        sshCommand remote: remote, command: "sh /clients/CBG/trunk-v1/startofbiz.sh"                
+    }
+}
+
+node {
+    def remote = [:]
+    remote.name = 'fiotestpt'
+    remote.host = '192.168.70.19'
+    remote.user = 'ofbiz'
+    remote.password = 'fio@123'
+    remote.allowAnyHosts = 'true'
+    stage('test plugin') {
+        sshCommand remote: remote, command: "ls -ltrh /clients/CBG/trunk-v1"                
+    }
+    stage('SVN UPDATE') {
+        sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1"
+        sshCommand remote: remote, command: "svn update"
+    }
+    stage('STOP OFBIZ') {
+        sshCommand remote: remote, command: "sh /clients/CBG/trunk-v1/stopofbiz.sh"                
+    }
+    stage('CLEAN AND BUILD') {
+        sshCommand remote: remote, command: "sh /clients/CBG/trunk-v1/ant clean"
+        sshCommand remote: remote, command: "sh /clients/CBG/trunk-v1/ant build"
+    }
+    stage('START OFBIZ') {
+        sshCommand remote: remote, command: "sh /clients/CBG/trunk-v1/startofbiz.sh"                
+    }
+}
+
+pipeline {
+    agent none
+    stages {
+        stage('CODE UPDATE') { 
+            steps {
+                sh "echo "CBG PT""
+                sh "cd /clients/CBG/trunk-v1"
+                sh "svn update"
+            }
+        }
+        stage('OFBIZ STOP') { 
+            steps {
+                sh "cd /clients/CBG/trunk-v1"
+                sh "tools/rc.ofbiz stop"
+            }
+        }
+        stage('CLEAN') { 
+            steps {
+                sh "echo "CLEANING""
+                sh "cd /clients/CBG/trunk-v1"
+                sh "ant clean"
+            }
+        }
+        stage('BUILD') {
+            steos {
+                sh "echo "BUILD IN PROGRESS""
+                sh "cd /clients/CBG/trunk-v1"
+                sh "ant build"
+            }
+        }
+        stage('OFBIZ START') { 
+            steps {
+                sh "cd /clients/CBG/trunk-v1"
+                sh "tools/rc.ofbiz start"
+            }
+        }
+    }
+}
+
+
+
+ failure {
+            mail to: team@example.com, subject: 'The Pipeline failed :('
+        }
+		
+		
+		
+pipeline {
+  agent any
+    stages {
+      stage ('Main Stage') {
+        steps {
+          script {
+            stage ('nothing but display a message') {
+              echo 'First stage'
+}
+            stage ('ssh') {
+              withCredentials([sshUserPrivateKey(credentialsId: 'xxxxxxxxxxxxx',   keyFileVariable: 'key', passphraseVariable: 'passphrase', usernameVariable: 'username')]) {
+{{ remote.passphrase = passphrase}}
+                sshagent(['xxxxxxxxxxxxx']) {
+   sh 'scp -o StrictHostKeyChecking=no $username@hostname:~/abc.sh .'
+}
+}
+}
+}
+}
+}
+}
+
+
+pipeline {
+    agent none
+    stages {
+        stage('CODE UPDATE') {
+			def remote = [:]
+			remote.name = 'fiotestpt'
+			remote.host = '192.168.70.19'
+			remote.user = 'ofbiz'
+			remote.password = 'fio@123'
+			remote.allowAnyHosts = true
+            sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1"
+            sshCommand remote: remote, command: "svn update"
+        }
+        stage('OFBIZ STOP') { 
+            def remote = [:]
+			remote.name = 'fiotestpt'
+			remote.host = '192.168.70.19'
+			remote.user = 'ofbiz'
+			remote.password = 'fio@123'
+			remote.allowAnyHosts = true
+            sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1"
+            sshCommand remote: remote, command: "tools/rc.ofbiz stop"
+        }
+        stage('CLEAN') { 
+			def remote = [:]
+			remote.name = 'fiotestpt'
+			remote.host = '192.168.70.19'
+			remote.user = 'ofbiz'
+			remote.password = 'fio@123'
+			remote.allowAnyHosts = true
+            sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1"
+            sshCommand remote: remote, command: "ant clean"
+        }
+        stage('BUILD') {
+            def remote = [:]
+			remote.name = 'fiotestpt'
+			remote.host = '192.168.70.19'
+			remote.user = 'ofbiz'
+			remote.password = 'fio@123'
+			remote.allowAnyHosts = true
+            sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1"
+            sshCommand remote: remote, command: "ant build"
+        }
+        stage('OFBIZ START') { 
+            def remote = [:]
+			remote.name = 'fiotestpt'
+			remote.host = '192.168.70.19'
+			remote.user = 'ofbiz'
+			remote.password = 'fio@123'
+			remote.allowAnyHosts = true
+            sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1"
+            sshCommand remote: remote, command: "tools/rc.ofbiz start"
+        }
+    }
+}
+
+
+
+
+parameters {
+  choice choices: ['Mahendran', 'Vijay_kumar', 'Arshiya', 'Sarika'], description: 'SELECT DEVELOPERS', name: 'developer'
+  string defaultValue: '', description: 'ENTER REVISION', name: 'revision', trim: true
+  string defaultValue: '', description: 'ENTER PREREVISION', name: 'prerevision', trim: true
+}
+
+
+stage('test') {
+  stages {
+    // One or more stages need to be included within the stages block.
+  }
+  
+ws('/clients/') {
+    // some block
+}
+
+
+
+  input {
+    message 'pwd'
+    parameters {
+      string defaultValue: '', description: '', name: 'test', trim: true
+    }
+  }
+}
+
+===================================================================================================================
++++++++++++++++++++++++++++working+++++++++++++++++++++++++++++++++++++++
+pipeline {
+    agent none
+    stages {
+        stage('Build') {
+            agent { label 'DBS_CBZ_PT_DBSFIO' }
+            steps {
+                echo 'Building..'
+                sh 'ls /clients'
+            }
+        }
+    }
+}
+---------------------------------------------
+
+stage ('Stage 0. Configure custom path')
+def customPath = "${env.JOB_NAME}/${PULL_REQUEST_NUMBER}/${env.BUILD_NUMBER}"
+
+stage ('Stage 1. Allocate workspace')
+def extWorkspace = exwsAllocate diskPoolId: 'diskpool1', path: customPath
+
+node ('linux') {
+    exws (extWorkspace) {
+        stage ('Stage 2. Build')
+        checkout scm
+        sh 'mvn clean install -DskipTests'
+    }
+}
+
+node ('test') {
+    exws (extWorkspace) {
+        stage ('Stage 3. Test')
+        sh 'mvn test'
+    }
+}
+================================================================================
+def extWorkspace
+withEnv(['CUSTOM_BUILD_PARAM=100']) {
+    stage ('Stage 1. Allocate workspace')
+    extWorkspace = exwsAllocate 'diskpool1'
+}
+
+node ('linux') {
+    exws (extWorkspace) {
+        stage ('Stage 2. Build')
+        checkout scm
+        sh 'mvn clean install -DskipTests'
+    }
+}
+
+node ('test') {
+    exws (extWorkspace) {
+        stage ('Stage 3. Test')
+        sh 'mvn test'
+    }
+}
+================================================================
+pipeline {
+  agent {
+    label "something"
+  }
+  options {
+    skipDefaultCheckout()
+  }
+  stages {
+    stage("foo") {
+      steps {
+        ws("some-path") {
+          checkout scm
+          // rest of stage
+        }
+      }
+    }
+    stage("next") {
+      steps {
+        ws("some-path") {
+          // next stage
+        }
+      }
+    }
+  }
+}
+===============================================================
+https://jenkinsci.github.io/job-dsl-plugin/#path/readFileFromWorkspace
+======================================================================
+
+		node {
+			def remote = [:]
+			remote.name = 'fiotestpt'
+			remote.host = '192.168.70.19'
+			remote.user = 'ofbiz'
+			remote.password = 'fio@123'
+			remote.allowAnyHosts = 'true'
+			stage('DEVELOPMENT') {
+				sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1; svn update"
+				sshCommand remote: remote, command: "sh /clients/CBG/trunk-v1/stopofbiz.sh"                
+				sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1/; sh ant clean"
+				sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1/; sh ant build"
+				sshCommand remote: remote, command: "sh /clients/CBG/trunk-v1/startofbiz.sh"                
+			}
+		}
+		node {
+			def remote = [:]
+			remote.name = 'fiozabbix'
+			remote.host = '192.168.70.15'
+			remote.user = 'ofbiz'
+			remote.password = 'fio@123'
+			remote.allowAnyHosts = 'true'
+			stage('STAGING') {   
+				sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1; svn update"
+				sshCommand remote: remote, command: "sh /clients/CBG/trunk-v1/stopofbiz.sh"
+				sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1/; sh ant clean"
+				sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1/; sh ant build"
+				sshCommand remote: remote, command: "sh /clients/CBG/trunk-v1/startofbiz.sh"
+				sshCommand remote: remote, command: "svn diff -r ${previousrevision}:${revision} > /home/ofbiz/patchs/${developer}${revision}.patch"
+				sshCommand remote: remote, command:"rsync -avzh -e ssh /home/ofbiz/patchs/${developer}${revision}.patch root@192.168.70.9:/home/ofbiz/patchs/${developer}${revision}.patch"
+			}
+		}
+		node {
+			def remote = [:]
+			remote.name = 'localhost.localdomain'
+			remote.host = '192.168.70.9'
+			remote.user = 'ofbiz'
+			remote.password = 'fio@123'
+			remote.allowAnyHosts = 'true'
+			stage('DEPLOYMENT') {
+				sshCommand remote: remote, command: "patch -p0 ${patch} < /home/ofbiz/patchs/${developer}${revision}.patch"
+				sshCommand remote: remote, command: "sh /clients/CBG/trunk-v1/stopofbiz.sh"
+				sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1/; sh ant clean"
+				sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1/; sh ant build"
+				sshCommand remote: remote, command: "sh /clients/CBG/trunk-v1/startofbiz.sh"                
+			}
+		}	
+		
+		
+pipeline {
+    agent {
+        node {
+            def remote = [:]
+            remote.name = 'fiotestpt'
+            remote.host = '192.168.70.19'
+            remote.user = 'ofbiz'
+            remote.password = 'fio@123'
+            label 'PT_TEST'
+            customWorkspace '/clients/CBG/trunk-v1'
+            remote.allowAnyHosts = 'false'
+            stage('DEVELOPMENT') {
+                sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1/"
+                checkout scm: [$class: 'SubversionSCM', additionalCredentials: [], excludedCommitMessages: '', excludedRegions: '', excludedRevprop: '', excludedUsers: '', filterChangelog: false, ignoreDirPropChanges: false, includedRegions: '', locations: [[cancelProcessOnExternalsFail: true, credentialsId: '1e77948b-a600-48c0-9358-95101301cbcb', depthOption: 'infinity', ignoreExternalsOption: true, local: '.', remote: 'http://192.168.70.18:8090/svn/CBG/trunk/trunk-v1']], quietOperation: true, workspaceUpdater: [$class: 'UpdateUpdater']]
+                sshCommand remote: remote, command: "sh /clients/CBG/trunk-v1/stopofbiz.sh"
+                sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1/; sh ant clean"
+                sshCommand remote: remote, command: "cd /clients/CBG/trunk-v1/; sh ant build"
+                sshCommand remote: remote, command: "sh /clients/CBG/trunk-v1/startofbiz.sh"
+            }
+        }
+    }
+}
+===========================================================================================
+stage("Branch: dev/master"){
+  parallel {
+    stage("Env: development") {
+      when {
+        allOf {
+          branch 'dev'
+          environment name: 'CHANGE_TARGET', value: ''
+        }
+      }
+      stages {
+        stage("Branch: dev"){
+          agent {label "development-slave"}
+          stages {
+            stage("Spawn Slave") {
+              steps {
+                sh 'command'
+              }
+              post {
+                failure {
+                  sh 'command'
+                }
+                aborted {
+                  sh 'command'
+                }
+              }
+            }
+            stage("Base Image") {
+              steps {
+                sh 'command'
+              }
+              post {
+                aborted {
+                  sh 'command'
+                }
+                failure {
+                  sh 'command'
+                }
+              }
+            }
+            stage("Dev Image") {
+              steps {
+                sh 'command'
+              }
+              post {
+                aborted {
+                  sh 'command'
+                }
+                failure {
+                  sh 'command'
+                }
+              }
+            }
+            stage("Notify Team"){
+              agent {label "master"}
+              steps {
+                sh 'command'
+              }
+            }
+            stage('Deploy QA') {
+              steps {
+                sh 'command'
+              }
+              post {
+                success {
+                  sh 'command'
+                }
+                failure {
+                  sh 'command'
+                }
+                aborted {
+                  sh 'command'
+                }
+                always {
+                  sh 'command'
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stage("Env: production") {
+      when {
+        allOf {
+          branch 'master'
+          environment name: 'CHANGE_TARGET', value: ''
+        }
+      }
+      stages {
+        stage("Branch: master"){
+          agent {label "production-slave"}
+          stages {
+            stage("Spawn Slave") {
+              steps {
+                sh 'command'
+              }
+              post {
+                failure {
+                  sh 'command'
+                }
+                aborted {
+                  sh 'command'
+                }
+              }
+            }
+            stage("Base Image") {
+              steps {
+                sh 'command'
+              }
+              post {
+                aborted {
+                  sh 'command'
+                }
+                failure {
+                  sh 'command'
+                }
+              }
+            }
+            stage("Prod Image") {
+              steps {
+                sh 'command'
+              }
+              post {
+                success {
+                  sh ' command'
+                }
+                failure {
+                  sh 'command'
+                }
+                aborted {
+                  sh 'command'
+                }
+                always {
+                  sh 'command'
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+----------------------------------------------------------------------------------
